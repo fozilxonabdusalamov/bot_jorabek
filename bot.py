@@ -18,7 +18,6 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemo
 load_dotenv()
 
 # TOKEN va ADMIN_CHANNEL ni .env dan olish
-# Agar topilmasa dasturni to'xtatish (yaxshi amaliyot)
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHANNEL_ID_STR = os.getenv("ADMIN_CHANNEL")
 
@@ -27,12 +26,7 @@ if not TOKEN:
 if not ADMIN_CHANNEL_ID_STR:
     raise ValueError("ADMIN_CHANNEL environment variable not set or missing in .env file")
 
-# ADMIN_CHANNEL ni butun songa o'girish
-try:
-    ADMIN_CHANNEL = int(ADMIN_CHANNEL_ID_STR)
-except ValueError:
-    raise ValueError("ADMIN_CHANNEL in .env file must be a valid integer ID")
-
+ADMIN_CHANNEL = int(ADMIN_CHANNEL_ID_STR)
 
 # --- FSM HOLATLARI ---
 class Form(StatesGroup):
@@ -61,8 +55,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
     )
     await state.set_state(Form.firstname)
 
-# --- FSM HANDLERLARI (Qolganlari o'zgarmadi, ular to'g'ri yozilgan) ---
-
+# --- FSM HANDLERLARI ---
 @dp.message(Form.firstname)
 async def process_firstname(message: types.Message, state: FSMContext):
     await state.update_data(firstname=message.text)
@@ -101,7 +94,6 @@ async def process_number(message: types.Message, state: FSMContext):
 
 @dp.message(Form.familynumber)
 async def process_familynumber(message: types.Message, state: FSMContext, bot: Bot):
-    # 'bot' argument sifatida qabul qilindi, shuning uchun global shart emas
     await state.update_data(familynumber=message.text)
     data = await state.get_data()
 
@@ -115,16 +107,12 @@ async def process_familynumber(message: types.Message, state: FSMContext, bot: B
         f"📱 Ota-ona tel: <b>{html.escape(data.get('familynumber'))}</b>"
     )
 
-    # Userga yuborish
     await message.answer(
         "Ma'lumot kiritganingiz uchun rahmat! 😊\n\n" + text,
         reply_markup=ReplyKeyboardRemove()
     )
 
-    # Admin kanalga yuborish
     await bot.send_message(ADMIN_CHANNEL, text)
-
-    # FSM ni tozalash
     await state.clear()
 
 # --- CANCEL HANDLER ---
@@ -147,4 +135,3 @@ async def main() -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
-
